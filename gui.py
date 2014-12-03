@@ -1,3 +1,6 @@
+### Final Project Submission
+### Students: Myles Novick & Ariel Camperi
+
 import Tkinter as tk
 import threading, time
 
@@ -55,7 +58,7 @@ class Icon(object):
 			self.posX = posX
 			self.posY = posY
 
-class Board:
+class Board(object):
 	def __init__(self, pixWidth=900, pixHeight=900):
 		self.root = tk.Tk()
 		self.canvasSize = (pixWidth, pixHeight)
@@ -105,11 +108,9 @@ def demo():
 	board.generate(20, 20)
 	def example():
 		time.sleep(1)
+		print "hello"
 		board.generate(20, 20, [Icon(8, 3, IconType.policePursuit)])
 		time.sleep(1)
 		board.generate(20, 20, [Icon(1, 3, IconType.policePursuit)])
 	threading.Thread(target=example).start()
 	board.startDisplay()
-
-demo()
-

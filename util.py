@@ -8,6 +8,18 @@ class Directions(object):
     WEST = 'West'
     STOP = 'Stop'
 
+    @staticmethod
+    def successor(pos, action):
+        if action == Directions.NORTH:
+            return (pos[0], pos[1] - 1)
+        if action == Directions.SOUTH:
+            return (pos[0], pos[1] + 1)
+        if action == Directions.EAST:
+            return (pos[0] + 1, pos[1])
+        if action == Directions.WEST:
+            return (pos[0] - 1, pos[1])
+        return pos
+
 class Station(object):
     def __init__(self, x, y):
         self.x = x
@@ -24,5 +36,9 @@ class Haven(object):
         self.y = y
 
 class Agent(object):
-    def getAction(self, state):
+    def getAction(self, simulationState):
         return Directions.STOP
+    def executeAction(self, action):
+        newPos = Directions.successor((self.x, self.y), action)
+        self.x = newPos[0]
+        self.y = newPos[1]
