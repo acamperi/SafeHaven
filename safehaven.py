@@ -1,7 +1,7 @@
 ### Final Project Submission
 ### Students: Myles Novick & Ariel Camperi
 
-import random
+import random, sys, argparse
 from math import *
 from util import *
 from police import *
@@ -99,10 +99,11 @@ class Simulation(object):
         self.state = SimulationState(params)
         self.board = board
         print self.state
-    def run(self, sleepTime=0.5):
+    def run(self):
+        global sleepTime
         while not self.state.isFinal():
             print "STEP"
-            policeActions = [p.getAction(self.state) for p in self.state.policeAgents]
+            policeActions = DispatcherAgent.getPoliceActions(self.state)
             criminalActions = [c.getAction(self.state) for c in self.state.criminalAgents]
             print policeActions
             print criminalActions
@@ -128,7 +129,12 @@ def display(state, board):
     icons = stationIcons + mallIcons + havenIcons + policeIcons + criminalIcons
     board.generate(state.N, state.N, icons)
 
-def main():
+sleepTime = 0.5
+
+def main(argv):
+    global sleepTime
+    if len(argv):
+        sleepTime = float(argv[0])
     params = SimulationParameters(100, 3, 9, 2, 3, 5)
     board = Board()
     sim = Simulation(params, board)
@@ -137,4 +143,4 @@ def main():
     board.startDisplay()
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])

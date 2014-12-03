@@ -17,5 +17,14 @@ class PoliceAgent(Agent):
         copy = PoliceAgent((self.x, self.y), self.patrolArea)
         copy.state = self.state
         return copy
+    def doPreProcessing(self, simulationState):
+        pass
     def getAction(self, simulationState):
         return Directions.STOP
+
+class DispatcherAgent(object):
+    @staticmethod
+    def getPoliceActions(simulationState):
+        for p in simulationState.policeAgents:
+            p.doPreProcessing(simulationState)
+        return [p.getAction(simulationState) for p in simulationState.policeAgents]
