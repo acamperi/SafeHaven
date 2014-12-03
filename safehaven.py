@@ -133,9 +133,10 @@ sleepTime = 0.5
 
 def main(argv):
     global sleepTime
+    #TODO: argparse
     if len(argv):
         sleepTime = float(argv[0])
-    params = SimulationParameters(100, 3, 9, 2, 3, 5)
+    params = SimulationParameters(50, 3, 9, 2, 3, 5)
     board = Board()
     sim = Simulation(params, board)
     board.generate(sim.state.N, sim.state.N)
