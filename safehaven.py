@@ -21,7 +21,6 @@ class SimulationParameters(object):
         self.M_pos = []
         self.H_pos = []
         self.C_pos = []
-
     def generatePositions(self, N, S, P, M, H, C):
         self.N = N
         self.S = S
@@ -37,7 +36,6 @@ class SimulationParameters(object):
                     pos = (random.randrange(0, self.N), random.randrange(0, self.N))
                 pair[1].append(pos)
                 claimedPositions.append(pos)
-
     def readFromFile(self, filename):
         def posListFromComponents(components):
             return [(int(pos[0]), int(pos[1])) for pos in map(lambda p: p.split("|"), components)]
@@ -58,7 +56,6 @@ class SimulationParameters(object):
                 elif components[0] == "P:":
                     self.P = len(components[1:])
                     self.P_pos = posListFromComponents(components[1:])
-                    print self.P_pos
                 elif components[0] == "C:":
                     self.C = len(components[1:])
                     self.C_pos = posListFromComponents(components[1:])
@@ -109,12 +106,12 @@ class SimulationState(object):
         (len(self.stations), len(self.malls), len(self.havens), len(self.policeAgents), len(self.criminalAgents))
 
 class Simulation(object):
-    def __init__(self, params, board):
+    def __init__(self, params, board, sleepTime):
         self.state = SimulationState(params)
         self.board = board
+        self.sleepTime = sleepTime
         print self.state
     def run(self):
-        global sleepTime
         while not self.state.isFinal():
             print "STEP"
             policeActions = DispatcherAgent.getPoliceActions(self.state)
@@ -123,7 +120,7 @@ class Simulation(object):
             print criminalActions
             self.state = self.state.generateSuccessor(policeActions, criminalActions)
             display(self.state, self.board)
-            time.sleep(sleepTime)
+            time.sleep(self.sleepTime)
         print "%d criminals were caught, %d got away" % (self.state.getNumCaughtCriminals(), self.state.getNumSafeCriminals())
 
 def display(state, board):
@@ -143,18 +140,18 @@ def display(state, board):
     icons = stationIcons + mallIcons + havenIcons + policeIcons + criminalIcons
     board.generate(state.N, state.N, icons)
 
-sleepTime = 0.5
-
 def main(argv):
-    global sleepTime
-    #TODO: argparse
-    if len(argv):
-        sleepTime = float(argv[0])
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-f", dest="infile", default=None)
+    parser.add_argument("-t", dest="sleepTime", type=float, default=0.5)
+    args = parser.parse_args()
     params = SimulationParameters()
-    # params.generatePositions(15, 1, 2, 1, 1, 1)
-    params.readFromFile("layout1.txt")
+    if args.infile is None:
+        params.generatePositions(15, 1, 2, 1, 1, 1)
+    else:
+        params.readFromFile(args.infile)
     board = Board()
-    sim = Simulation(params, board)
+    sim = Simulation(params, board, args.sleepTime)
     board.generate(sim.state.N, sim.state.N)
     threading.Thread(target=sim.run).start()
     board.startDisplay()
