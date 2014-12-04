@@ -140,7 +140,7 @@ def display(state, board):
     icons = stationIcons + mallIcons + havenIcons + policeIcons + criminalIcons
     board.generate(state.N, state.N, icons)
 
-def main(argv):
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", dest="infile", default=None)
     parser.add_argument("-t", dest="sleepTime", type=float, default=0.5)
@@ -157,4 +157,4 @@ def main(argv):
     board.startDisplay()
 
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    main()
