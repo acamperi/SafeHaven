@@ -23,23 +23,20 @@ class SimulationParameters(object):
         self.C_pos = []
 
     def generatePositions(self, N, S, P, M, H, C):
-        # TODO: check for collisions
         self.N = N
         self.S = S
         self.P = P
         self.M = M
         self.H = H
         self.C = C
-        for s in xrange(self.S):
-            self.S_pos.append((random.randrange(0, self.N), random.randrange(0, self.N)))
-        for m in xrange(self.M):
-            self.M_pos.append((random.randrange(0, self.N), random.randrange(0, self.N)))
-        for h in xrange(self.H):
-            self.H_pos.append((random.randrange(0, self.N), random.randrange(0, self.N)))
-        for c in xrange(self.C):
-            self.C_pos.append((random.randrange(0, self.N), random.randrange(0, self.N)))
-        for p in xrange(self.P):
-            self.P_pos.append((random.randrange(0, self.N), random.randrange(0, self.N)))
+        claimedPositions = []
+        for pair in [(self.S, self.S_pos), (self.M, self.M_pos), (self.H, self.H_pos), (self.P, self.P_pos), (self.C, self.C_pos)]:
+            for i in xrange(pair[0]):
+                pos = (random.randrange(0, self.N), random.randrange(0, self.N))
+                while pos in claimedPositions:
+                    pos = (random.randrange(0, self.N), random.randrange(0, self.N))
+                pair[1].append(pos)
+                claimedPositions.append(pos)
 
     def readFromFile(self, filename):
         def posListFromComponents(components):
@@ -154,6 +151,7 @@ def main(argv):
     if len(argv):
         sleepTime = float(argv[0])
     params = SimulationParameters()
+    # params.generatePositions(15, 1, 2, 1, 1, 1)
     params.readFromFile("layout1.txt")
     board = Board()
     sim = Simulation(params, board)
