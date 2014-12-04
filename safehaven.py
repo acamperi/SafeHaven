@@ -9,22 +9,27 @@ from criminal import *
 from gui import *
 
 class SimulationParameters(object):
-    def __init__(self, N, S, P, M, H, C):
+    def __init__(self):
+        self.N = 0
+        self.S = 0
+        self.P = 0
+        self.M = 0
+        self.H = 0
+        self.C = 0
+        self.S_pos = []
+        self.P_pos = []
+        self.M_pos = []
+        self.H_pos = []
+        self.C_pos = []
+
+    def generatePositions(self, N, S, P, M, H, C):
+        # TODO: check for collisions
         self.N = N
         self.S = S
         self.P = P
         self.M = M
         self.H = H
         self.C = C
-        self.S_pos = []
-        self.P_pos = []
-        self.P_patrolAreas = []
-        self.M_pos = []
-        self.H_pos = []
-        self.C_pos = []
-        self.generatePositions()
-
-    def generatePositions(self):
         for s in xrange(self.S):
             self.S_pos.append((random.randrange(0, self.N), random.randrange(0, self.N)))
         for m in xrange(self.M):
@@ -33,22 +38,33 @@ class SimulationParameters(object):
             self.H_pos.append((random.randrange(0, self.N), random.randrange(0, self.N)))
         for c in xrange(self.C):
             self.C_pos.append((random.randrange(0, self.N), random.randrange(0, self.N)))
-        rootP = int(sqrt(self.P))
-        patrolSize = int(float(self.N) / float(rootP))
-        halfPatrolSize = int(patrolSize / 2)
-        x = halfPatrolSize
-        y = halfPatrolSize
         for p in xrange(self.P):
-            self.P_pos.append((x, y))
-            x += patrolSize
-            if x >= self.N:
-                x = halfPatrolSize
-            y += patrolSize
-            self.P_patrolAreas.append((x - halfPatrolSize, y - halfPatrolSize, patrolSize, patrolSize))
+            self.P_pos.append((random.randrange(0, self.N), random.randrange(0, self.N)))
 
-    @staticmethod
-    def readFromFile(filename):
-        pass
+    def readFromFile(self, filename):
+        def posListFromComponents(components):
+            return [(int(pos[0]), int(pos[1])) for pos in map(lambda p: p.split("|"), components)]
+        with open(filename) as infile:
+            for line in infile.readlines():
+                components = line.strip().split(" ")
+                if components[0] == "N:":
+                    self.N = int(components[1])
+                elif components[0] == "S:":
+                    self.S = len(components[1:])
+                    self.S_pos = posListFromComponents(components[1:])
+                elif components[0] == "M:":
+                    self.M = len(components[1:])
+                    self.M_pos = posListFromComponents(components[1:])
+                elif components[0] == "H:":
+                    self.H = len(components[1:])
+                    self.H_pos = posListFromComponents(components[1:])
+                elif components[0] == "P:":
+                    self.P = len(components[1:])
+                    self.P_pos = posListFromComponents(components[1:])
+                    print self.P_pos
+                elif components[0] == "C:":
+                    self.C = len(components[1:])
+                    self.C_pos = posListFromComponents(components[1:])
 
 class SimulationState(object):
     def __init__(self, params=None):
@@ -57,7 +73,7 @@ class SimulationState(object):
             self.stations = [Station(pos[0], pos[1]) for pos in params.S_pos]
             self.malls = [Mall(pos[0], pos[1]) for pos in params.M_pos]
             self.havens = [Haven(pos[0], pos[1]) for pos in params.H_pos]
-            self.policeAgents = [PoliceAgent(params.P_pos[i], params.P_patrolAreas[i]) for i in xrange(params.P)]
+            self.policeAgents = [PoliceAgent(pos) for pos in params.P_pos]
             self.criminalAgents = [CriminalAgent(pos) for pos in params.C_pos]
         else:
             self.N = 0
@@ -92,7 +108,8 @@ class SimulationState(object):
     def getNumCaughtCriminals(self):
         return len(filter(lambda c: c.state == CriminalState.CAUGHT, self.criminalAgents))
     def __str__(self):
-        return "%d stations, %d malls, %d havens, %d police, %d criminals" % (len(self.stations), len(self.malls), len(self.havens), len(self.policeAgents), len(self.criminalAgents))
+        return "%d stations, %d malls, %d havens, %d police, %d criminals" % \
+        (len(self.stations), len(self.malls), len(self.havens), len(self.policeAgents), len(self.criminalAgents))
 
 class Simulation(object):
     def __init__(self, params, board):
@@ -136,7 +153,8 @@ def main(argv):
     #TODO: argparse
     if len(argv):
         sleepTime = float(argv[0])
-    params = SimulationParameters(50, 3, 9, 2, 3, 5)
+    params = SimulationParameters()
+    params.readFromFile("layout1.txt")
     board = Board()
     sim = Simulation(params, board)
     board.generate(sim.state.N, sim.state.N)
