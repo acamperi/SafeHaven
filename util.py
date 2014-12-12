@@ -3,6 +3,7 @@
 
 import math
 
+""" Configuration values """
 POLICE_TURNS_PER_CRIMINALS = 1
 CRIMINAL_SIGHT_RADIUS = 1
 POLICE_SIGHT_RADIUS = 5
@@ -10,6 +11,9 @@ MAX_POLICE_PER_CRIMINAL = 5
 MIN_POLICE_DISTANCE_TO_PURSUE = 10
 
 class Directions(object):
+    """
+    Useful constants for grid actions, and utility method for calculating action effects.
+    """
     NORTH = 'North'
     SOUTH = 'South'
     EAST = 'East'
@@ -50,6 +54,10 @@ def euclideanDistance(pos1, pos2):
     return math.sqrt((pos1[0] - pos2[0])**2 + (pos1[1] - pos2[1])**2)
 
 class Agent(object):
+    """
+    Superclass for PoliceAgent and CriminalAgent. Shared functionality like
+    initialization, position helpers, and other method stubs.
+    """
     def __init__(self, pos):
         self.x = pos[0]
         self.y = pos[1]

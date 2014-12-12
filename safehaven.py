@@ -9,6 +9,9 @@ from criminal import *
 from gui import *
 
 class SimulationParameters(object):
+    """
+    This class is used for setting up the simulation initially. It can generate random positions or read from a file.
+    """
     def __init__(self):
         self.N = 0
         self.S = 0
@@ -22,6 +25,10 @@ class SimulationParameters(object):
         self.H_pos = []
         self.C_pos = []
     def generatePositions(self, N, S, P, M, H, C):
+        """
+        Takes a board size N, number of police stations S, number of police agents P, number of malls M, number of havens
+        H, and number of criminals C. Generates random unique positions for these agents and fixed points in the simulation.
+        """
         self.N = N
         self.S = S
         self.P = P
@@ -37,7 +44,11 @@ class SimulationParameters(object):
                 pair[1].append(pos)
                 claimedPositions.append(pos)
     def readFromFile(self, filename):
+        """
+        Takes a filename, and reads in simulation parameters (agent/object counts and positions)
+        """
         def posListFromComponents(components):
+            """ Transforms "x1|y1 x2|y2 ..." into [(x1,y1), (x2,y2), ...] """
             return [(int(pos[0]), int(pos[1])) for pos in map(lambda p: p.split("|"), components)]
         with open(filename) as infile:
             for line in infile.readlines():
@@ -61,7 +72,16 @@ class SimulationParameters(object):
                     self.C_pos = posListFromComponents(components[1:])
 
 class SimulationState(object):
+    """
+    This class models the state of the simulation at an given point.
+    Object properties include a list of station positions, a list of mall positions,
+    a list of haven positions, a list of PoliceAgent objects, and a list of CriminalAgent
+    objects.
+    """
     def __init__(self, params=None):
+        """
+        Initialized with a SimulationParameters object.
+        """
         if params is not None:
             self.N = params.N
             # self.stations = [Station(pos[0], pos[1]) for pos in params.S_pos]
@@ -80,6 +100,11 @@ class SimulationState(object):
             self.policeAgents = []
             self.criminalAgents = []
     def copy(self, copyAgents=True):
+        """
+        Generate a new SimulationState instance and copy over the important properties.
+        If copy agents is false only do a shallow copy of those arrays, otherwise
+        call the agent objects' respective copy methods to generate new instances.
+        """
         state = SimulationState()
         state.N = self.N
         # state.stations = [Station(s.x, s.y) for s in self.stations]
@@ -96,6 +121,9 @@ class SimulationState(object):
             state.criminalAgents = copy.copy(self.criminalAgents)
         return state
     def getLegalActionsForAgent(self, agent):
+        """
+        Takes an agent in a simulation and returns valid moves to make on the grid.
+        """
         legalActions = [Directions.STOP]
         if agent.x > 0:
             legalActions.append(Directions.WEST)
@@ -107,16 +135,29 @@ class SimulationState(object):
             legalActions.append(Directions.SOUTH)
         return legalActions
     def generateSuccessorForPoliceAction(self, action, i):
+        """
+        Creates a copy of the current simulation state, and applies the action
+        to the police agent at index i.
+        """
         successor = self.copy(False)
         successor.policeAgents[i] = successor.policeAgents[i].copy()
         successor.policeAgents[i].executeAction(action, successor)
         return successor
     def generateSuccessorForCriminalAction(self, action, i):
+        """
+        Creates a copy of the current simulation state, and applies the action
+        to the criminal agent at index i.
+        """
         successor = self.copy(False)
         successor.criminalAgents[i] = successor.criminalAgents[i].copy()
         successor.criminalAgents[i].executeAction(action, successor)
         return successor
     def generateSuccessor(self, policeActions, criminalActions):
+        """
+        Creates a copy of the current simulation state, and applies the passed in
+        police and criminal actions. Applies no-ops to criminals after having
+        applied police actions to make sure state is properly updated.
+        """
         successor = self.copy()
         for j in xrange(len(successor.criminalAgents)):
             successor.criminalAgents[j].executeAction(criminalActions[j], successor)
@@ -126,25 +167,41 @@ class SimulationState(object):
             successor.criminalAgents[k].executeAction(Directions.STOP, successor)
         return successor
     def isFinal(self):
+        """
+        Checks if there are still active criminal agents left. The game ends when
+        all criminals are either caught or safe.
+        """
         for c in self.criminalAgents:
             if c.isActive():
                 return False
         return True
     def getNumSafeCriminals(self):
+        """ Safe criminals have reached a haven and are no longer active. """
         return len(filter(lambda c: c.state == CriminalState.SAFE, self.criminalAgents))
     def getNumCaughtCriminals(self):
+        """ Caught criminals ran into the police and were removed from activity. """
         return len(filter(lambda c: c.state == CriminalState.CAUGHT, self.criminalAgents))
     def __str__(self):
         return "%d stations, %d malls, %d havens, %d police, %d criminals" % \
         (len(self.stations), len(self.malls), len(self.havens), len(self.policeAgents), len(self.criminalAgents))
 
 class Simulation(object):
+    """
+    This class is used to encapsulate the whole process of running the simulation.
+    It is initialized with a SimulationState object, a Board object for the visualization,
+    and a sleep time delay between turns.
+    """
     def __init__(self, params, board, sleepTime):
         self.state = SimulationState(params)
         self.board = board
         self.sleepTime = sleepTime
         print self.state
     def run(self):
+        """
+        Runs a configurable number of police agent turns and one criminal agent turn,
+        repeating this process until the simulation is over. It then outputs the results
+        and closes the visualization which it previously started.
+        """
         while not self.state.isFinal():
             print "STEP"
             for i in xrange(POLICE_TURNS_PER_CRIMINALS - 1):
@@ -161,6 +218,10 @@ class Simulation(object):
         self.board.stopDisplay()
 
 def display(state, board):
+    """
+    This function takes a SimulationState and extracts the relevant parts to feed
+    into the Board object for display in the visualization.
+    """
     def iconTypeForPoliceAgent(policeAgent):
         if policeAgent.state == PoliceState.PURSUIT:
             return IconType.policePursuit
@@ -182,6 +243,11 @@ def display(state, board):
     board.generate(state.N, state.N, icons)
 
 def main():
+    """
+    Reads in input file name and sleep time from the command line. Generates simulation
+    paramaters, instantiates the simulation, and starts it up on a separate thread
+    (for visualization purposes).
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", dest="infile", default=None)
     parser.add_argument("-t", dest="sleepTime", type=float, default=0.3)
