@@ -132,7 +132,7 @@ class PoliceAgent(Agent):
             legalSuccessors = [stateGuess.generateSuccessorForPoliceAction(action, i) for action in legalActions]
             agents = stateGuess.policeAgents + [stateGuess.criminalAgents[self.pursuedCriminal]]
             self.index = i
-            evals = [self.alphabeta(successor, agents, i + 1, 2 * len(agents) - 1, float("-inf"), float("inf")) for successor in legalSuccessors]
+            evals = [self.alphabeta(successor, agents, i + 1, POLICE_MINIMAX_DEPTH * len(agents) - 1, float("-inf"), float("inf")) for successor in legalSuccessors]
             self.pursuedCriminalPosGuess = self.getCriminalGuessPos(simulationState)
             return legalActions[evals.index(max(evals))]
     def executeAction(self, action, simulationState):
@@ -152,13 +152,13 @@ class DispatcherAgent(object):
     """
     @staticmethod
     def getPoliceActions(simulationState):
-        """ Build a list of criminals who are escaping and whose positions are confirmed. """
+        # Build a list of criminals who are escaping and whose positions are confirmed.
         sightedCriminals = set([i for i in xrange(len(simulationState.criminalAgents)) if simulationState.criminalAgents[i].justCommittedCrime])
         for police in simulationState.policeAgents:
             sightedCriminals |= set(police.checkForCriminalSightings(simulationState))
 
-        """ Build list of police agents on patrol and in pursuit. Temporarily resets 
-        agents in pursuit of sighted criminals, in preparation for load balancing. """
+        # Build list of police agents on patrol and in pursuit. Temporarily resets 
+        # agents in pursuit of sighted criminals, in preparation for load balancing.
         availablePoliceAgents = []
         policeAgentsInPursuit = []
         for police in simulationState.policeAgents:
@@ -169,15 +169,15 @@ class DispatcherAgent(object):
             else:
                 policeAgentsInPursuit.append(police)
 
-        """ Builds dictionary where criminal index/estimate position tuples point
-        to number of police agents in pursuit of that simulated criminal. """
+        # Builds dictionary where criminal index/estimate position tuples point
+        # to number of police agents in pursuit of that simulated criminal.
         numPolicePerSightedCriminal = {(c, simulationState.criminalAgents[c].getPos()) : 0 for c in sightedCriminals}
         for police in policeAgentsInPursuit:
             key = (police.pursuedCriminal, police.pursuedCriminalPosGuess)
             numPolicePerSightedCriminal[key] = 0 if key not in numPolicePerSightedCriminal else numPolicePerSightedCriminal[key] + 1
         criminalsToPursueOrderedKeys = sorted(numPolicePerSightedCriminal, key=lambda x: numPolicePerSightedCriminal[x])
 
-        """ Assigns police agents to estimated criminals based on proximity and load balancing. """
+        # Assigns police agents to estimated criminals based on proximity and load balancing.
         while availablePoliceAgents:
             assignmentHappened = False
             for criminal, criminalPos in criminalsToPursueOrderedKeys:
@@ -198,5 +198,5 @@ class DispatcherAgent(object):
             if not assignmentHappened:
                 break
 
-        """ Calls down to police agents to pick successor actions. """
+        # Calls down to police agents to pick successor actions.
         return [p.getAction(simulationState) for p in simulationState.policeAgents]

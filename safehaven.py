@@ -203,7 +203,6 @@ class Simulation(object):
         and closes the visualization which it previously started.
         """
         while not self.state.isFinal():
-            print "STEP"
             for i in xrange(POLICE_TURNS_PER_CRIMINALS - 1):
                 policeActions = DispatcherAgent.getPoliceActions(self.state)
                 self.state = self.state.generateSuccessor(policeActions, [Directions.STOP for c in self.state.criminalAgents])
@@ -254,7 +253,7 @@ def main():
     args = parser.parse_args()
     params = SimulationParameters()
     if args.infile is None:
-        params.generatePositions(30, 1, 5, 1, 2, 2)
+        params.generatePositions(20, 1, 5, 1, 2, 2)
     else:
         params.readFromFile(args.infile)
     board = Board()
