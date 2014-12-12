@@ -9,17 +9,22 @@ class PoliceState(object):
 
 class PoliceAgent(Agent):
     def __init__(self, pos):
-        self.x = pos[0]
-        self.y = pos[1]
+        super(PoliceAgent, self).__init__(pos)
         self.state = PoliceState.PATROL
+        self.pursuedCriminal = None
+        self.pursuedCriminalPosGuess = None
     def copy(self):
-        copy = PoliceAgent((self.x, self.y))
+        copy = PoliceAgent(self.getPos())
         copy.state = self.state
         return copy
     def doPreProcessing(self, simulationState):
         pass
     def getAction(self, simulationState):
         return Directions.STOP
+    def executeAction(self, action, simulationState):
+        super(PoliceAgent, self).executeAction(action)
+        if self.state == PoliceState.PURSUIT and self.getPos() == simulationState.criminalAgents[self.pursuedCriminal].getPos():
+            self.state = PoliceState.PATROL
 
 class DispatcherAgent(object):
     @staticmethod

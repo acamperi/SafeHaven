@@ -11,8 +11,7 @@ class CriminalState(object):
 
 class CriminalAgent(Agent):
     def __init__(self, pos):
-        self.x = pos[0]
-        self.y = pos[1]
+        super(CriminalAgent, self).__init__(pos)
         self.state = CriminalState.STEAL
     def copy(self):
         copy = CriminalAgent((self.x, self.y))
@@ -22,3 +21,16 @@ class CriminalAgent(Agent):
         return self.state not in [CriminalState.SAFE, CriminalState.CAUGHT]
     def getAction(self, simulationState):
         return Directions.STOP
+    def executeAction(self, action, simulationState):
+        super(CriminalAgent, self).executeAction(action)
+        currPos = self.getPos()
+        if self.state == CriminalState.STEAL and currPos in simulationState.malls:
+            self.state = CriminalState.ESCAPE
+        if self.state == CriminalState.ESCAPE:
+            if currPos in simulationState.havens:
+                self.state = CriminalState.SAFE
+            else:
+                for policeAgent in simulationState.policeAgents:
+                    if currPos == policeAgent.getPos():
+                        self.state = CriminalState.CAUGHT
+                        break

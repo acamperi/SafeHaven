@@ -1,7 +1,7 @@
 ### Final Project Submission
 ### Students: Myles Novick & Ariel Camperi
 
-import random, sys, argparse
+import random, sys, argparse, copy
 from math import *
 from util import *
 from police import *
@@ -64,9 +64,12 @@ class SimulationState(object):
     def __init__(self, params=None):
         if params is not None:
             self.N = params.N
-            self.stations = [Station(pos[0], pos[1]) for pos in params.S_pos]
-            self.malls = [Mall(pos[0], pos[1]) for pos in params.M_pos]
-            self.havens = [Haven(pos[0], pos[1]) for pos in params.H_pos]
+            # self.stations = [Station(pos[0], pos[1]) for pos in params.S_pos]
+            # self.malls = [Mall(pos[0], pos[1]) for pos in params.M_pos]
+            # self.havens = [Haven(pos[0], pos[1]) for pos in params.H_pos]
+            self.stations = params.S_pos
+            self.malls = params.M_pos
+            self.havens = params.H_pos
             self.policeAgents = [PoliceAgent(pos) for pos in params.P_pos]
             self.criminalAgents = [CriminalAgent(pos) for pos in params.C_pos]
         else:
@@ -76,21 +79,47 @@ class SimulationState(object):
             self.havens = []
             self.policeAgents = []
             self.criminalAgents = []
-    def copy(self):
-        copy = SimulationState()
-        copy.N = self.N
-        copy.stations = [Station(s.x, s.y) for s in self.stations]
-        copy.malls = [Mall(m.x, m.y) for m in self.malls]
-        copy.havens = [Haven(h.x, h.y) for h in self.havens]
-        copy.policeAgents = [p.copy() for p in self.policeAgents]
-        copy.criminalAgents = [c.copy() for c in self.criminalAgents]
-        return copy
+    def copy(self, copyAgents=True):
+        state = SimulationState()
+        state.N = self.N
+        # state.stations = [Station(s.x, s.y) for s in self.stations]
+        # state.malls = [Mall(m.x, m.y) for m in self.malls]
+        # state.havens = [Haven(h.x, h.y) for h in self.havens]
+        state.stations = copy.copy(self.stations)
+        state.malls = copy.copy(self.malls)
+        state.havens = copy.copy(self.havens)
+        if copyAgents:
+            state.policeAgents = [p.copy() for p in self.policeAgents]
+            state.criminalAgents = [c.copy() for c in self.criminalAgents]
+        else:
+            state.policeAgents = copy.copy(self.policeAgents)
+            state.criminalAgents = copy.copy(self.criminalAgents)
+        return state
+    def getLegalActionsForAgent(agent):
+        legalActions = [Directions.STOP]
+        if agent.x > 0:
+            legalActions.append(Directions.WEST)
+        if agent.y > 0:
+            legalActions.append(Directions.NORTH)
+        if agent.x < self.N - 1:
+            legalActions.append(Directions.EAST)
+        if agent.y < self.N - 1:
+            legalActions.append(Directions.SOUTH)
+        return legalActions
+    def generateSuccessorForPoliceAction(action, i):
+        successor = self.copy(False)
+        successor.policeAgents[i].executeAction(action, successor)
+        return successor
+    def generateSuccessorForCriminalAction(action, i):
+        successor = self.copy(False)
+        successor.criminalAgents[i].executeAction(action, successor)
+        return successor
     def generateSuccessor(self, policeActions, criminalActions):
         successor = self.copy()
         for i in xrange(len(successor.policeAgents)):
-            successor.policeAgents[i].executeAction(policeActions[i])
+            successor.policeAgents[i].executeAction(policeActions[i], successor)
         for j in xrange(len(successor.criminalAgents)):
-            successor.criminalAgents[j].executeAction(criminalActions[j])
+            successor.criminalAgents[j].executeAction(criminalActions[j], successor)
         return successor
     def isFinal(self):
         for c in self.criminalAgents:
@@ -132,9 +161,12 @@ def display(state, board):
         if criminalAgent.state == CriminalState.ESCAPE:
             return IconType.criminalEscape
         return IconType.criminalSteal
-    stationIcons = [Icon(s.x, s.y, IconType.station) for s in state.stations]
-    mallIcons = [Icon(m.x, m.y, IconType.mall) for m in state.malls]
-    havenIcons = [Icon(h.x, h.y, IconType.haven) for h in state.havens]
+    # stationIcons = [Icon(s.x, s.y, IconType.station) for s in state.stations]
+    # mallIcons = [Icon(m.x, m.y, IconType.mall) for m in state.malls]
+    # havenIcons = [Icon(h.x, h.y, IconType.haven) for h in state.havens]
+    stationIcons = [Icon(s[0], s[1], IconType.station) for s in state.stations]
+    mallIcons = [Icon(m[0], m[1], IconType.mall) for m in state.malls]
+    havenIcons = [Icon(h[0], h[1], IconType.haven) for h in state.havens]
     policeIcons = [Icon(p.x, p.y, iconTypeForPoliceAgent(p)) for p in state.policeAgents]
     criminalIcons = [Icon(c.x, c.y, iconTypeForCriminalAgent(c)) for c in state.criminalAgents]
     icons = stationIcons + mallIcons + havenIcons + policeIcons + criminalIcons

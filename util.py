@@ -20,25 +20,28 @@ class Directions(object):
             return (pos[0] - 1, pos[1])
         return pos
 
-class Station(object):
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
+# class Station(object):
+#     def __init__(self, x, y):
+#         self.x = x
+#         self.y = y
 
-class Mall(object):
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
+# class Mall(object):
+#     def __init__(self, x, y):
+#         self.x = x
+#         self.y = y
 
-class Haven(object):
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
+# class Haven(object):
+#     def __init__(self, x, y):
+#         self.x = x
+#         self.y = y
 
 class Agent(object):
+    def __init__(self, pos):
+        self.x = pos[0]
+        self.y = pos[1]
+    def getPos(self):
+        return (self.x, self.y)
     def getAction(self, simulationState):
         return Directions.STOP
     def executeAction(self, action):
-        newPos = Directions.successor((self.x, self.y), action)
-        self.x = newPos[0]
-        self.y = newPos[1]
+        self.x, self.y = Directions.successor(self.getPos(), action)
