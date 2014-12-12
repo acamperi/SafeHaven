@@ -1,6 +1,14 @@
 ### Final Project Submission
 ### Students: Myles Novick & Ariel Camperi
 
+import math
+
+POLICE_TURNS_PER_CRIMINALS = 1
+CRIMINAL_SIGHT_RADIUS = 1
+POLICE_SIGHT_RADIUS = 5
+MAX_POLICE_PER_CRIMINAL = 5
+MIN_POLICE_DISTANCE_TO_PURSUE = 10
+
 class Directions(object):
     NORTH = 'North'
     SOUTH = 'South'
@@ -35,12 +43,20 @@ class Directions(object):
 #         self.x = x
 #         self.y = y
 
+def manhattanDistance(pos1, pos2):
+    return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
+
+def euclideanDistance(pos1, pos2):
+    return math.sqrt((pos1[0] - pos2[0])**2 + (pos1[1] - pos2[1])**2)
+
 class Agent(object):
     def __init__(self, pos):
         self.x = pos[0]
         self.y = pos[1]
     def getPos(self):
         return (self.x, self.y)
+    def setPos(self, pos):
+        self.x, self.y = pos
     def getAction(self, simulationState):
         return Directions.STOP
     def executeAction(self, action):

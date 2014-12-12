@@ -9,6 +9,7 @@ class IconType(object):
 	policePatrol = "policePatrol"
 	criminalSteal = "criminalSteal"
 	criminalEscape = "criminalEscape"
+	criminalGhost = "criminalGhost"
 	mall = "mall"
 	haven = "haven"
 	station = "station"
@@ -37,6 +38,12 @@ class Icon(object):
 			self.icon = IconType.criminalEscape
 			self.shape = "circle"
 			self.color = "red"
+			self.posX = posX
+			self.posY = posY
+		elif iconType == IconType.criminalGhost:
+			self.icon = IconType.criminalGhost
+			self.shape = "circle"
+			self.color = "lavender"
 			self.posX = posX
 			self.posY = posY
 		elif iconType == IconType.mall:

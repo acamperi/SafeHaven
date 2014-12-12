@@ -95,7 +95,7 @@ class SimulationState(object):
             state.policeAgents = copy.copy(self.policeAgents)
             state.criminalAgents = copy.copy(self.criminalAgents)
         return state
-    def getLegalActionsForAgent(agent):
+    def getLegalActionsForAgent(self, agent):
         legalActions = [Directions.STOP]
         if agent.x > 0:
             legalActions.append(Directions.WEST)
@@ -106,20 +106,24 @@ class SimulationState(object):
         if agent.y < self.N - 1:
             legalActions.append(Directions.SOUTH)
         return legalActions
-    def generateSuccessorForPoliceAction(action, i):
+    def generateSuccessorForPoliceAction(self, action, i):
         successor = self.copy(False)
+        successor.policeAgents[i] = successor.policeAgents[i].copy()
         successor.policeAgents[i].executeAction(action, successor)
         return successor
-    def generateSuccessorForCriminalAction(action, i):
+    def generateSuccessorForCriminalAction(self, action, i):
         successor = self.copy(False)
+        successor.criminalAgents[i] = successor.criminalAgents[i].copy()
         successor.criminalAgents[i].executeAction(action, successor)
         return successor
     def generateSuccessor(self, policeActions, criminalActions):
         successor = self.copy()
-        for i in xrange(len(successor.policeAgents)):
-            successor.policeAgents[i].executeAction(policeActions[i], successor)
         for j in xrange(len(successor.criminalAgents)):
             successor.criminalAgents[j].executeAction(criminalActions[j], successor)
+        for i in xrange(len(successor.policeAgents)):
+            successor.policeAgents[i].executeAction(policeActions[i], successor)
+        for k in xrange(len(successor.criminalAgents)):
+            successor.criminalAgents[k].executeAction(Directions.STOP, successor)
         return successor
     def isFinal(self):
         for c in self.criminalAgents:
@@ -143,14 +147,18 @@ class Simulation(object):
     def run(self):
         while not self.state.isFinal():
             print "STEP"
+            for i in xrange(POLICE_TURNS_PER_CRIMINALS - 1):
+                policeActions = DispatcherAgent.getPoliceActions(self.state)
+                self.state = self.state.generateSuccessor(policeActions, [Directions.STOP for c in self.state.criminalAgents])
+                display(self.state, self.board)
+                time.sleep(self.sleepTime)
             policeActions = DispatcherAgent.getPoliceActions(self.state)
             criminalActions = [c.getAction(self.state) for c in self.state.criminalAgents]
-            print policeActions
-            print criminalActions
             self.state = self.state.generateSuccessor(policeActions, criminalActions)
             display(self.state, self.board)
             time.sleep(self.sleepTime)
         print "%d criminals were caught, %d got away" % (self.state.getNumCaughtCriminals(), self.state.getNumSafeCriminals())
+        self.board.stopDisplay()
 
 def display(state, board):
     def iconTypeForPoliceAgent(policeAgent):
@@ -168,18 +176,19 @@ def display(state, board):
     mallIcons = [Icon(m[0], m[1], IconType.mall) for m in state.malls]
     havenIcons = [Icon(h[0], h[1], IconType.haven) for h in state.havens]
     policeIcons = [Icon(p.x, p.y, iconTypeForPoliceAgent(p)) for p in state.policeAgents]
-    criminalIcons = [Icon(c.x, c.y, iconTypeForCriminalAgent(c)) for c in state.criminalAgents]
+    # criminalIcons = [Icon(pos[0], pos[1], IconType.criminalGhost) for pos in set([police.pursuedCriminalPosGuess for police in state.policeAgents if police.pursuedCriminalPosGuess and police.state == PoliceState.PURSUIT])]
+    criminalIcons = [Icon(c.x, c.y, iconTypeForCriminalAgent(c)) for c in state.criminalAgents if c.state != CriminalState.CAUGHT]
     icons = stationIcons + mallIcons + havenIcons + policeIcons + criminalIcons
     board.generate(state.N, state.N, icons)
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", dest="infile", default=None)
-    parser.add_argument("-t", dest="sleepTime", type=float, default=0.5)
+    parser.add_argument("-t", dest="sleepTime", type=float, default=0.3)
     args = parser.parse_args()
     params = SimulationParameters()
     if args.infile is None:
-        params.generatePositions(15, 1, 2, 1, 1, 1)
+        params.generatePositions(30, 1, 5, 1, 2, 2)
     else:
         params.readFromFile(args.infile)
     board = Board()
